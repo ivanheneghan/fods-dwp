@@ -15,7 +15,6 @@
 
 1. I read in all files to local data frames: 
 
-*
 activity_labels <- read.table("activity_labels.txt")
 features <- read.table("features.txt")
 subject_train <- read.table("subject_train.txt")
@@ -24,65 +23,48 @@ y_train <- read.table("y_train.txt")
 subject_test <- read.table("subject_test.txt")
 X_test <- read.table("x_test.txt")
 y_test <- read.table("y_test.txt")
-*
 
 2. I merged the training and test sets into one set, using rbind():
 
-*
 subject_merged <- rbind(subject_train, subject_test)
 X_merged <- rbind(X_train, X_test)
 y_merged <- rbind(y_train, y_test)
-*
 
 3. I named the columns in the X_merged data with the header names taken from the features file, as these are the column headers/variable names:
 
-*
 colnames(X_merged) <- t(features[2])
-*
 
 4. I expanded the activities data set to include both label identified (numerical) and name (text):
 
 4.1. I merged activity names and labels. I preserved the order by adding a row number variable (id) to the merged y data (y_merged) (from 1 to the number of rows), with an eye towards removing this again later (otherwise order would be lost when merging the acitivy labels with the activity names). I then merged the activity labels and the activity names, giving me the complete list of activities, in order:
 
-*
 y_merged$id <- 1:nrow(y_merged)
 activitylabels_names <- merge(y_merged, activity_labels, by = "V1", all = TRUE)
 activitylabels_names <- activitylabels_names[order(activitylabels_names$id),]
-*
 
 4.1 I reordered & renamed columns to make this cleaner:
 
-*
 y_test <- y_test[,c(2, 1)]
 activitylabels_names <- activitylabels_names[,c(2, 1, 3)]
 colnames(activitylabels_names)[2] <- "activitylabel"
 colnames(activitylabels_names)[3] <- "activityname"
-*
 
 5. I merged X, y and subject data sets to form a complete data set:
 
-*
 complete <- cbind(subject_merged, activitylabels_names, X_merged)
-*
 
 5.1 I renamed relevant columns (1), and removed the id column I used to sort:
 
-*
 colnames(complete)[1] <- "subject"
 complete$id <- NULL
-*
 
 6. I extracted the mean/standard deviation columns (columns with mean() and std() in the names). I used grep for this. I then merged each set of data (mean and standard deviation) with the subject and activity data sets, renamed columns, and removed the id column:
 
-*
 mean_subset <- complete[,grep("mean()", colnames(complete), ignore.case = TRUE)]
 std_subset <- complete[,grep("std()", colnames(complete), ignore.case = TRUE)]
 mean_std <- cbind(subject_merged, activitylabels_names, mean_subset, std_subset)
 colnames(mean_std)[1] <- "subject"
-*
 
 7. I created the data set with average of each variable for activity & subject. I used aggregate() for this, with the dot notation due to the huge number of variables, aggregating across subject and activity name, and taking the mean:
 
-*
 tidy <- aggregate(. ~ subject + activityname, mean_std, mean)
-*
